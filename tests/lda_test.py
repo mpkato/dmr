@@ -96,7 +96,7 @@ class LDATestCase(unittest.TestCase):
 
     def test_lda___init__(self):
         '''
-        __init__ test
+        LDA.__init__
         '''
         voca, docs, lda = self._init_lda()
 
@@ -130,7 +130,7 @@ class LDATestCase(unittest.TestCase):
 
     def test_lda_inference(self):
         '''
-        __init__ test
+        LDA.inference
         '''
         voca, docs, lda = self._init_lda()
 
