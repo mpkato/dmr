@@ -8,6 +8,7 @@
 import numpy as np
 import random
 import sys
+from collections import defaultdict
 import logging
 
 def print_info(info_tuple):
@@ -136,29 +137,36 @@ class LDA:
             if (i + 1) % self.SAMPLING_RATE == 0:
                 perp = self.perplexity()
                 print_info(("PERP%s" % (i+1), perp))
-        self.output_word_dist(voca)
+        self.output_word_dist_with_voca(voca)
 
-    def output_word_dist(self, voca, topk=10):
+    def word_dist_with_voca(self, voca, topk=10):
         '''
         Output the word probability of each topic
         '''
         zcount = np.zeros(self.K, dtype=int)
-        wordcount = [dict() for k in range(self.K)]
+        wordcount = [defaultdict(int) for k in range(self.K)]
         for xlist, zlist in zip(self.docs, self.z_m_n):
             for x, z in zip(xlist, zlist):
                 zcount[z] += 1
-                if x in wordcount[z]:
-                    wordcount[z][x] += 1
-                else:
-                    wordcount[z][x] = 1
+                wordcount[z][x] += 1
 
         phi = self.worddist()
+        result = defaultdict(dict)
         for k in range(self.K):
             for w in np.argsort(-phi[k])[:topk]:
-                print_info(("TOPIC", k, voca[w],
-                    phi[k,w], wordcount[k].get(w, 0)))
+                result[k][voca[w]] = phi[k, w]
+        return result
+
+    def output_word_dist_with_voca(self, voca, topk=10):
+        word_dist = self.word_dist_with_voca(voca, topk)
+        for k in word_dist:
+            for w in word_dist[k]:
+                print_info(("TOPIC", k, w, word_dist[k][w]))
 
 def main():
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    import dmr
     import argparse
     logging.basicConfig(level=logging.INFO, filename='lda.log')
 
@@ -178,13 +186,13 @@ def main():
     if not options.filename:
         parser.error("need corpus filename(-f)")
 
-    corpus = Corpus.read(options.filename)
-    voca = Vocabulary()
+    corpus = dmr.Corpus.read(options.filename)
+    voca = dmr.Vocabulary()
     docs = voca.read_corpus(corpus)
     if options.df > 0:
         docs = voca.cut_low_freq(docs, options.df)
 
-    lda = LDA(options.K, options.alpha, options.beta, docs, voca.size())
+    lda = dmr.LDA(options.K, options.alpha, options.beta, docs, voca.size())
     print_info(("BASIC", "corpus=%d, words=%d, K=%d, a=%f, b=%f, iter=%d"
         % (len(docs), len(voca.vocas), options.K,
         options.alpha, options.beta, options.iteration)))
