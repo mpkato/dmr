@@ -71,5 +71,3 @@ class Vocabulary:
 
     def size(self):
         return len(self.vocas)
-
-
