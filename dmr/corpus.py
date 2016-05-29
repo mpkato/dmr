@@ -11,11 +11,11 @@ class Corpus:
         self.docs = docs
 
     @classmethod
-    def read(cls, filename):
+    def read(cls, filename, dtype=str):
         docs = []
         with open(filename, 'r') as f:
             for line in f:
-                doc = [w.strip() for w in line.split(' ')]
+                doc = [dtype(w.strip()) for w in line.split(' ')]
                 if len(doc) > 0:
                     docs.append(doc)
         return Corpus(docs)

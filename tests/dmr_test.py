@@ -54,21 +54,12 @@ class DMRTestCase(unittest.TestCase):
             for vec in vecs:
                 f.write(" ".join(map(str, list(vec))) + "\n")
 
-    def _read_vecfile(self, filepath):
-        result = []
-        with open(filepath, "r") as f:
-            for line in f:
-                ls = [float(l.strip()) for l in line.split(" ")]
-                vec = np.array(ls, dtype=np.float32)
-                result.append(vec)
-        result = np.array(result, dtype=np.float32)
-        return result
-
     def _init_dmr(self):
         corpus = dmr.Corpus.read(self.docfilepath)
+        vcorpus = dmr.Corpus.read(self.vecfilepath, dtype=float)
+        vecs = np.array([[v for v in vec] for vec in vcorpus], dtype=np.float32)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
-        vecs = self._read_vecfile(self.vecfilepath)
         lda = dmr.DMR(self.K, self.sigma, self.beta, docs, vecs, voca.size())
         return voca, docs, vecs, lda
 
