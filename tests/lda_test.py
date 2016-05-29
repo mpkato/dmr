@@ -87,14 +87,18 @@ class LDATestCase(unittest.TestCase):
                 result[w] += 1
         return result
 
-    def test___init__(self):
-        '''
-        __init__ test
-        '''
+    def _init_lda(self):
         corpus = dmr.Corpus.read(self.datfilepath)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
         lda = dmr.LDA(self.K, self.alpha, self.beta, docs, voca.size())
+        return voca, docs, lda
+
+    def test_lda___init__(self):
+        '''
+        __init__ test
+        '''
+        voca, docs, lda = self._init_lda()
 
         # n_m_z
         self.assertAlmostEqual(np.sum(lda.n_m_z[0]), 10 + self.K * self.alpha)
@@ -124,6 +128,23 @@ class LDATestCase(unittest.TestCase):
                 result[w] += 1
         return result
 
+    def test_lda_inference(self):
+        '''
+        __init__ test
+        '''
+        voca, docs, lda = self._init_lda()
+
+        n_m_z_0 = np.sum(lda.n_m_z[0])
+        n_m_z_1 = np.sum(lda.n_m_z[1])
+        n_z_w_0 = np.sum(lda.n_z_w[:, 0])
+        n_z_w_1 = np.sum(lda.n_z_w[:, 1])
+
+        lda.inference()
+
+        self.assertAlmostEquals(np.sum(lda.n_m_z[0]), n_m_z_0)
+        self.assertAlmostEquals(np.sum(lda.n_m_z[1]), n_m_z_1)
+        self.assertAlmostEquals(np.sum(lda.n_z_w[:, 0]), n_z_w_0)
+        self.assertAlmostEquals(np.sum(lda.n_z_w[:, 1]), n_z_w_1)
 
 
 if __name__ == '__main__':
