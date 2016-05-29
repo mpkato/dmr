@@ -160,8 +160,6 @@ class LDA:
 
 def main():
     import argparse
-    from vocabulary import Vocabulary
-    from corpus import Corpus
     logging.basicConfig(level=logging.INFO, filename='lda.log')
 
     parser = argparse.ArgumentParser()
