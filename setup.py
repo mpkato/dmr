@@ -1,4 +1,6 @@
-from distutils.core import setup
+# -*- coding:utf-8 -*-
+from setuptools import setup
+
 setup(
     name = "dmr",
     packages = ["dmr"],
