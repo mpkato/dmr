@@ -143,13 +143,6 @@ class LDA:
         '''
         Output the word probability of each topic
         '''
-        zcount = np.zeros(self.K, dtype=int)
-        wordcount = [defaultdict(int) for k in range(self.K)]
-        for xlist, zlist in zip(self.docs, self.z_m_n):
-            for x, z in zip(xlist, zlist):
-                zcount[z] += 1
-                wordcount[z][x] += 1
-
         phi = self.worddist()
         result = defaultdict(dict)
         for k in range(self.K):

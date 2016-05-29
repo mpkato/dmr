@@ -11,7 +11,8 @@ setup(
     license     = "MIT License",
     url = "https://github.com/mpkato/dmr",
     install_requires = [
-        'numpy'
+        'numpy',
+        'scipy'
     ],
     tests_require=['nose']
 )
