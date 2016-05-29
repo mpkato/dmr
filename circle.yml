@@ -3,10 +3,7 @@ machine:
         version: 3.5.0
 dependencies:
     pre:
-        - pip install python-coveralls
         - pip install --upgrade setuptools
 test:
     override:
-        - nosetests -v --with-coverage --with-xunit --xunit-file=$CIRCLE_TEST_REPORTS/nosetests.xml
-    post:
-        - coveralls
+        - nosetests -v
