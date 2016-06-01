@@ -139,11 +139,13 @@ class LDA:
                 print_info(("PERP%s" % (i+1), perp))
         self.output_word_dist_with_voca(voca)
 
-    def word_dist_with_voca(self, voca, topk=10):
+    def word_dist_with_voca(self, voca, topk=None):
         '''
         Output the word probability of each topic
         '''
         phi = self.worddist()
+        if topk is None:
+            topk = phi.shape[1]
         result = defaultdict(dict)
         for k in range(self.K):
             for w in np.argsort(-phi[k])[:topk]:
