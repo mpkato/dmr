@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from collections import defaultdict
 # lda
 LDA_DOC_FILEPATH = os.path.join(
     os.path.dirname(__file__), '..', 'dat', 'LDA.doc.dat')
@@ -66,3 +67,10 @@ def mk_dmr_dat():
     with open(DMR_VEC_FILEPATH, "w") as f:
         for vec in vecs:
             f.write(" ".join(map(str, list(vec))) + "\n")
+
+def count_word_freq(docs):
+    result = defaultdict(int)
+    for doc in docs:
+        for w in doc:
+            result[w] += 1
+    return result

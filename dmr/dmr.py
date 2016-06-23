@@ -45,7 +45,9 @@ class DMR(LDA):
 
         def dll(x):
             x = x.reshape((self.K, self.L))
-            return self._dll(x)
+            result = self._dll(x)
+            result = result.reshape(self.K * self.L)
+            return result
 
         Lambda = np.random.multivariate_normal(np.zeros(self.L), 
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
@@ -104,5 +106,4 @@ class DMR(LDA):
             - special.digamma(alpha)[:,:,np.newaxis]), axis=0)\
             - x / (self.sigma ** 2)
         result = -result
-        result = result.reshape(self.K * self.L)
         return result

@@ -4,9 +4,8 @@ import nose
 import dmr
 import os
 import numpy as np
-from collections import defaultdict
 from tests.settings import (DMR_DOC_FILEPATH, DMR_VEC_FILEPATH,
-    K, BETA, SIGMA, mk_dmr_dat)
+    K, BETA, SIGMA, mk_dmr_dat, count_word_freq)
 
 class DMRTestCase(unittest.TestCase):
     def setUp(self):
@@ -35,7 +34,7 @@ class DMRTestCase(unittest.TestCase):
         self.assertAlmostEqual(np.sum(lda.n_m_z[1]), 10)
 
         # n_z_w
-        wfreq = self._count_word_freq(docs)
+        wfreq = count_word_freq(docs)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 0]),
             wfreq[0] + K * BETA)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 1]),
@@ -48,13 +47,6 @@ class DMRTestCase(unittest.TestCase):
         # z_m_n
         self.assertAlmostEqual(list(lda.z_m_n[0]).count(0), lda.n_m_z[0, 0])
         self.assertAlmostEqual(list(lda.z_m_n[0]).count(1), lda.n_m_z[0, 1])
-
-    def _count_word_freq(self, docs):
-        result = defaultdict(int)
-        for doc in docs:
-            for w in doc:
-                result[w] += 1
-        return result
 
     def test_dmr_inference(self):
         '''
