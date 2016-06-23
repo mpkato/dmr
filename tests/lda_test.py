@@ -5,47 +5,20 @@ import dmr
 import os
 import numpy as np
 from collections import defaultdict
+from tests.settings import (LDA_DOC_FILEPATH,
+    K, ALPHA, BETA, mk_lda_dat)
 
 class LDATestCase(unittest.TestCase):
     def setUp(self):
         np.random.seed(0)
-        self.datfilepath = os.path.join(
-            os.path.dirname(__file__), '..', 'dat', 'LDA.dat')
-        if not os.path.exists(self.datfilepath):
-            self._mkdat()
-        self.K = 5
-        self.alpha = 0.1
-        self.beta = 0.01
-
-
-    def _mkdat(self):
-        M = 100
-        N = 10
-        K = 5
-        V = 10
-        CHAR_OFFSET = 97
-        docs = []
-        for m in range(M):
-            k = np.random.randint(0, K)
-            doc = []
-            for n in range(N):
-                v = np.random.randint(0, V)
-                w = "%s%s" % (chr(CHAR_OFFSET+k), chr(CHAR_OFFSET+v))
-                doc.append(w)
-            docs.append(doc)
-
-        dirpath = os.path.dirname(self.datfilepath)
-        if not os.path.exists(dirpath):
-            os.mkdir(dirpath)
-        with open(self.datfilepath, "w") as f:
-            for doc in docs:
-                f.write(" ".join(doc) + "\n")
+        if not os.path.exists(LDA_DOC_FILEPATH):
+            mk_lda_dat()
 
     def test_corpus_read(self):
         '''
         Corpus.read
         '''
-        corpus = dmr.Corpus.read(self.datfilepath)
+        corpus = dmr.Corpus.read(LDA_DOC_FILEPATH)
         self.assertEqual(tuple(list(corpus)[0]),
             tuple(['ef', 'ea', 'ed', 'ed', 'eh', 'ej', 'ed', 'ef', 'ec', 'ee']))
         self.assertEqual(len(corpus), 100)
@@ -54,7 +27,7 @@ class LDATestCase(unittest.TestCase):
         '''
         Vocabulary.read_corpus
         '''
-        corpus = dmr.Corpus.read(self.datfilepath)
+        corpus = dmr.Corpus.read(LDA_DOC_FILEPATH)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
         self.assertEqual(docs[0][2], docs[0][3])
@@ -66,7 +39,7 @@ class LDATestCase(unittest.TestCase):
         '''
         Vocabulary.cut_low_freq
         '''
-        corpus = dmr.Corpus.read(self.datfilepath)
+        corpus = dmr.Corpus.read(LDA_DOC_FILEPATH)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
         freq = self._count_doc_freq(docs)
@@ -88,10 +61,10 @@ class LDATestCase(unittest.TestCase):
         return result
 
     def _init_lda(self):
-        corpus = dmr.Corpus.read(self.datfilepath)
+        corpus = dmr.Corpus.read(LDA_DOC_FILEPATH)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
-        lda = dmr.LDA(self.K, self.alpha, self.beta, docs, voca.size())
+        lda = dmr.LDA(K, ALPHA, BETA, docs, voca.size())
         return voca, docs, lda
 
     def test_lda___init__(self):
@@ -101,24 +74,24 @@ class LDATestCase(unittest.TestCase):
         voca, docs, lda = self._init_lda()
 
         # n_m_z
-        self.assertAlmostEqual(np.sum(lda.n_m_z[0]), 10 + self.K * self.alpha)
-        self.assertAlmostEqual(np.sum(lda.n_m_z[1]), 10 + self.K * self.alpha)
+        self.assertAlmostEqual(np.sum(lda.n_m_z[0]), 10 + K * ALPHA)
+        self.assertAlmostEqual(np.sum(lda.n_m_z[1]), 10 + K * ALPHA)
 
         # n_z_w
         wfreq = self._count_word_freq(docs)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 0]),
-            wfreq[0] + self.K * self.beta)
+            wfreq[0] + K * BETA)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 1]),
-            wfreq[1] + self.K * self.beta)
+            wfreq[1] + K * BETA)
 
         # n_z
         self.assertAlmostEqual(lda.n_z[0], np.sum(lda.n_z_w[0, :]))
         self.assertAlmostEqual(lda.n_z[1], np.sum(lda.n_z_w[1, :]))
 
         # z_m_n
-        self.assertAlmostEqual(list(lda.z_m_n[0]).count(0) + self.alpha,
+        self.assertAlmostEqual(list(lda.z_m_n[0]).count(0) + ALPHA,
             lda.n_m_z[0, 0])
-        self.assertAlmostEqual(list(lda.z_m_n[0]).count(1) + self.alpha,
+        self.assertAlmostEqual(list(lda.z_m_n[0]).count(1) + ALPHA,
             lda.n_m_z[0, 1])
 
     def _count_word_freq(self, docs):

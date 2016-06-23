@@ -1,6 +1,9 @@
 import os
 import numpy as np
 # lda
+LDA_DOC_FILEPATH = os.path.join(
+    os.path.dirname(__file__), '..', 'dat', 'LDA.doc.dat')
+ALPHA = 0.1
 
 # dmr
 DMR_DOC_FILEPATH = os.path.join(
@@ -17,6 +20,24 @@ M = 100
 N = 10
 V = 10
 BETA = 0.01
+
+def mk_lda_dat():
+    docs = []
+    for m in range(M):
+        k = np.random.randint(0, K)
+        doc = []
+        for n in range(N):
+            v = np.random.randint(0, V)
+            w = "%s%s" % (chr(CHAR_OFFSET+k), chr(CHAR_OFFSET+v))
+            doc.append(w)
+        docs.append(doc)
+
+    dirpath = os.path.dirname(LDA_DOC_FILEPATH)
+    if not os.path.exists(dirpath):
+        os.mkdir(dirpath)
+    with open(LDA_DOC_FILEPATH, "w") as f:
+        for doc in docs:
+            f.write(" ".join(doc) + "\n")
 
 def mk_dmr_dat():
     docs = []
@@ -45,4 +66,3 @@ def mk_dmr_dat():
     with open(DMR_VEC_FILEPATH, "w") as f:
         for vec in vecs:
             f.write(" ".join(map(str, list(vec))) + "\n")
-
