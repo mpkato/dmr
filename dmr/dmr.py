@@ -41,40 +41,11 @@ class DMR(LDA):
     def bfgs(self):
         def ll(x):
             x = x.reshape((self.K, self.L))
-            result = 0.0
-            # P(w|z)
-            result += self.K * special.gammaln(self.beta * self.K)
-            result += -np.sum(special.gammaln(np.sum(self.n_z_w, axis=1)))
-            result += np.sum(special.gammaln(self.n_z_w))
-            result += -self.V * special.gammaln(self.beta)
-
-            # P(z|Lambda)
-            alpha = np.exp(np.dot(self.vecs, x.T))
-            result += np.sum(special.gammaln(np.sum(alpha, axis=1)))
-            result += -np.sum(special.gammaln(
-                np.sum(self.n_m_z+alpha, axis=1)))
-            result += np.sum(special.gammaln(self.n_m_z+alpha))
-            result += -np.sum(special.gammaln(alpha))
-
-            # P(Lambda)
-            result += -self.K / 2.0 * np.log(2.0 * np.pi * (self.sigma ** 2))
-            result += -1.0 / (2.0 * (self.sigma ** 2)) * np.sum(x ** 2)
-
-            result = -result
-            return result
+            return self._ll(x)
 
         def dll(x):
             x = x.reshape((self.K, self.L))
-            alpha = np.exp(np.dot(self.vecs, x.T))
-            result = np.sum(self.vecs[:,np.newaxis,:] * alpha[:,:,np.newaxis]\
-                * (special.digamma(np.sum(alpha, axis=1))[:,np.newaxis,np.newaxis]\
-                - special.digamma(np.sum(self.n_m_z+alpha, axis=1))[:,np.newaxis,np.newaxis]\
-                + special.digamma(self.n_m_z+alpha)[:,:,np.newaxis]\
-                - special.digamma(alpha)[:,:,np.newaxis]), axis=0)\
-                - x / (self.sigma ** 2)
-            result = -result
-            result = result.reshape(self.K * self.L)
-            return result
+            return self._dll(x)
 
         Lambda = np.random.multivariate_normal(np.zeros(self.L), 
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
@@ -100,3 +71,38 @@ class DMR(LDA):
                 log_per -= np.log(np.inner(phi[:,w], theta))
             N += len(doc)
         return np.exp(log_per / N)
+
+    def _ll(self, x):
+        result = 0.0
+        # P(w|z)
+        result += self.K * special.gammaln(self.beta * self.K)
+        result += -np.sum(special.gammaln(np.sum(self.n_z_w, axis=1)))
+        result += np.sum(special.gammaln(self.n_z_w))
+        result += -self.V * special.gammaln(self.beta)
+
+        # P(z|Lambda)
+        alpha = np.exp(np.dot(self.vecs, x.T))
+        result += np.sum(special.gammaln(np.sum(alpha, axis=1)))
+        result += -np.sum(special.gammaln(
+            np.sum(self.n_m_z+alpha, axis=1)))
+        result += np.sum(special.gammaln(self.n_m_z+alpha))
+        result += -np.sum(special.gammaln(alpha))
+
+        # P(Lambda)
+        result += -self.K / 2.0 * np.log(2.0 * np.pi * (self.sigma ** 2))
+        result += -1.0 / (2.0 * (self.sigma ** 2)) * np.sum(x ** 2)
+
+        result = -result
+        return result
+
+    def _dll(self, x):
+        alpha = np.exp(np.dot(self.vecs, x.T))
+        result = np.sum(self.vecs[:,np.newaxis,:] * alpha[:,:,np.newaxis]\
+            * (special.digamma(np.sum(alpha, axis=1))[:,np.newaxis,np.newaxis]\
+            - special.digamma(np.sum(self.n_m_z+alpha, axis=1))[:,np.newaxis,np.newaxis]\
+            + special.digamma(self.n_m_z+alpha)[:,:,np.newaxis]\
+            - special.digamma(alpha)[:,:,np.newaxis]), axis=0)\
+            - x / (self.sigma ** 2)
+        result = -result
+        result = result.reshape(self.K * self.L)
+        return result
