@@ -5,62 +5,23 @@ import dmr
 import os
 import numpy as np
 from collections import defaultdict
+from tests.settings import (DMR_DOC_FILEPATH, DMR_VEC_FILEPATH,
+    K, BETA, SIGMA, mk_dmr_dat)
 
 class DMRTestCase(unittest.TestCase):
     def setUp(self):
         np.random.seed(0)
-        self.docfilepath = os.path.join(
-            os.path.dirname(__file__), '..', 'dat', 'DMR.doc.dat')
-        self.vecfilepath = os.path.join(
-            os.path.dirname(__file__), '..', 'dat', 'DMR.vec.dat')
-        if not os.path.exists(self.docfilepath)\
-            or not os.path.exists(self.vecfilepath):
-            self._mkdat()
-        self.K = 5
-        self.sigma = 1.0
-        self.beta = 0.01
-
-    def _mkdat(self):
-        M = 100
-        N = 10
-        K = 5
-        L = 10
-        V = 10
-        CHAR_OFFSET = 97
-        docs = []
-        vecs = []
-        for m in range(M):
-            k = np.random.randint(0, K)
-            # doc
-            doc = []
-            for n in range(N):
-                v = np.random.randint(0, V)
-                w = "%s%s" % (chr(CHAR_OFFSET+k), chr(CHAR_OFFSET+v))
-                doc.append(w)
-            docs.append(doc)
-            # vec
-            vec = np.zeros(L)
-            vec[k] = 1.0
-            vec[k+5] = 1.0
-            vecs.append(vec)
-
-        dirpath = os.path.dirname(self.docfilepath)
-        if not os.path.exists(dirpath):
-            os.mkdir(dirpath)
-        with open(self.docfilepath, "w") as f:
-            for doc in docs:
-                f.write(" ".join(doc) + "\n")
-        with open(self.vecfilepath, "w") as f:
-            for vec in vecs:
-                f.write(" ".join(map(str, list(vec))) + "\n")
+        if not os.path.exists(DMR_DOC_FILEPATH)\
+            or not os.path.exists(DMR_VEC_FILEPATH):
+            mk_dmr_dat()
 
     def _init_dmr(self):
-        corpus = dmr.Corpus.read(self.docfilepath)
-        vcorpus = dmr.Corpus.read(self.vecfilepath, dtype=float)
+        corpus = dmr.Corpus.read(DMR_DOC_FILEPATH)
+        vcorpus = dmr.Corpus.read(DMR_VEC_FILEPATH, dtype=float)
         vecs = np.array([[v for v in vec] for vec in vcorpus], dtype=np.float32)
         voca = dmr.Vocabulary()
         docs = voca.read_corpus(corpus)
-        lda = dmr.DMR(self.K, self.sigma, self.beta, docs, vecs, voca.size())
+        lda = dmr.DMR(K, SIGMA, BETA, docs, vecs, voca.size())
         return voca, docs, vecs, lda
 
     def test_dmr___init__(self):
@@ -76,9 +37,9 @@ class DMRTestCase(unittest.TestCase):
         # n_z_w
         wfreq = self._count_word_freq(docs)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 0]),
-            wfreq[0] + self.K * self.beta)
+            wfreq[0] + K * BETA)
         self.assertAlmostEqual(np.sum(lda.n_z_w[:, 1]),
-            wfreq[1] + self.K * self.beta)
+            wfreq[1] + K * BETA)
 
         # n_z
         self.assertAlmostEqual(lda.n_z[0], np.sum(lda.n_z_w[0, :]))
