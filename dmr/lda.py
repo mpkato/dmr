@@ -120,14 +120,18 @@ class LDA:
         doclens = np.array(list(map(len, docs)))
         return self.n_m_z / (doclens[:, np.newaxis] + self.K * self.alpha)
 
-    def perplexity(self, docs=None):
+    def perplexity(self, docs=None, thetas=None):
         '''
         Compute the perplexity
         '''
         if docs == None:
+            if thetas is None:
+                raise Exception("thetas should not be None if docs are None")
             docs = self.docs
+        else:
+            thetas = self.topicdist(docs)
+
         phi = self.worddist()
-        thetas = self.topicdist(docs)
         log_per = 0
         N = 0
         for m, doc in enumerate(docs):
