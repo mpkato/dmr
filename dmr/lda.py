@@ -20,7 +20,8 @@ class LDA:
     Latent Dirichlet Allocation with Collapsed Gibbs Sampling
     '''
     SAMPLING_RATE = 10
-    def __init__(self, K, alpha, beta, docs, V):
+    def __init__(self, K, alpha, beta, docs, V, 
+        is_trained=False, n_z_w=None, n_z=None):
         # set params
         self.K = K
         self.alpha = alpha
@@ -30,6 +31,12 @@ class LDA:
 
         # init state
         self._init_state()
+        self.is_trained = is_trained
+        if self.is_trained:
+            if n_z_w is None or n_z is None:
+                raise Exception("n_z_w and n_z should not be None")
+            self.n_z_w = n_z_w
+            self.n_z = n_z
 
     def _init_state(self):
         '''
@@ -82,8 +89,10 @@ class LDA:
         '''
         z = z_n[n]
         n_m_z[z] -= 1
-        self.n_z_w[z, t] -= 1
-        self.n_z[z] -= 1
+
+        if not self.is_trained:
+            self.n_z_w[z, t] -= 1
+            self.n_z[z] -= 1
 
     def assignment(self, z_n, n_m_z, n, t, new_z):
         '''
@@ -91,8 +100,10 @@ class LDA:
         '''
         z_n[n] = new_z
         n_m_z[new_z] += 1
-        self.n_z_w[new_z, t] += 1
-        self.n_z[new_z] += 1
+
+        if not self.is_trained:
+            self.n_z_w[new_z, t] += 1
+            self.n_z[new_z] += 1
 
     def worddist(self):
         '''
@@ -155,8 +166,10 @@ class LDA:
     def output_word_dist_with_voca(self, voca, topk=10):
         word_dist = self.word_dist_with_voca(voca, topk)
         for k in word_dist:
-            for w in word_dist[k]:
-                print_info(("TOPIC", k, w, word_dist[k][w]))
+            word_dist[k] = sorted(word_dist[k].items(),
+                key=lambda x: x[1], reverse=True)
+            for w, v in word_dist[k]:
+                print_info(("TOPIC", k, w, v))
 
 def main():
     import os
