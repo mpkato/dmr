@@ -20,8 +20,7 @@ class LDA:
     Latent Dirichlet Allocation with Collapsed Gibbs Sampling
     '''
     SAMPLING_RATE = 10
-    def __init__(self, K, alpha, beta, docs, V, 
-        is_trained=False, n_z_w=None, n_z=None):
+    def __init__(self, K, alpha, beta, docs, V, trained_lda=None):
         # set params
         self.K = K
         self.alpha = alpha
@@ -31,12 +30,10 @@ class LDA:
 
         # init state
         self._init_state()
-        self.is_trained = is_trained
-        if self.is_trained:
-            if n_z_w is None or n_z is None:
-                raise Exception("n_z_w and n_z should not be None")
-            self.n_z_w = n_z_w
-            self.n_z = n_z
+        self.trained_lda = trained_lda
+        if self.trained_lda is not None:
+            self.n_z_w = self.trained_lda.n_z_w
+            self.n_z = self.trained_lda.n_z
 
     def _init_state(self):
         '''
@@ -90,7 +87,7 @@ class LDA:
         z = z_n[n]
         n_m_z[z] -= 1
 
-        if not self.is_trained:
+        if self.trained_lda is None:
             self.n_z_w[z, t] -= 1
             self.n_z[z] -= 1
 
@@ -101,7 +98,7 @@ class LDA:
         z_n[n] = new_z
         n_m_z[new_z] += 1
 
-        if not self.is_trained:
+        if self.trained_lda is None:
             self.n_z_w[new_z, t] += 1
             self.n_z[new_z] += 1
 
@@ -111,30 +108,25 @@ class LDA:
         '''
         return self.n_z_w / self.n_z[:, np.newaxis]
 
-    def topicdist(self, docs=None):
+    def topicdist(self):
         '''
         theta = P(z|d): topic probability of each document
         '''
-        if docs == None:
-            docs = self.docs
-        doclens = np.array(list(map(len, docs)))
+        doclens = np.array(list(map(len, self.docs)))
         return self.n_m_z / (doclens[:, np.newaxis] + self.K * self.alpha)
 
-    def perplexity(self, docs=None, thetas=None):
+    def perplexity(self):
         '''
         Compute the perplexity
         '''
-        if docs == None:
-            if thetas is None:
-                raise Exception("thetas should not be None if docs are None")
-            docs = self.docs
+        if self.trained_lda is None:
+            phi = self.worddist()
         else:
-            thetas = self.topicdist(docs)
-
-        phi = self.worddist()
+            phi = self.trained_lda.worddist()
+        thetas = self.topicdist()
         log_per = 0
         N = 0
-        for m, doc in enumerate(docs):
+        for m, doc in enumerate(self.docs):
             theta = thetas[m]
             for w in doc:
                 log_per -= np.log(np.inner(phi[:,w], theta))
