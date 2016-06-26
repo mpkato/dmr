@@ -20,7 +20,7 @@ class LDA:
     Latent Dirichlet Allocation with Collapsed Gibbs Sampling
     '''
     SAMPLING_RATE = 10
-    def __init__(self, K, alpha, beta, docs, V, trained_lda=None):
+    def __init__(self, K, alpha, beta, docs, V, trained=None):
         # set params
         self.K = K
         self.alpha = alpha
@@ -30,10 +30,10 @@ class LDA:
 
         # init state
         self._init_state()
-        self.trained_lda = trained_lda
-        if self.trained_lda is not None:
-            self.n_z_w = self.trained_lda.n_z_w
-            self.n_z = self.trained_lda.n_z
+        self.trained = trained
+        if self.trained is not None:
+            self.n_z_w = self.trained.n_z_w
+            self.n_z = self.trained.n_z
 
     def _init_state(self):
         '''
@@ -87,7 +87,7 @@ class LDA:
         z = z_n[n]
         n_m_z[z] -= 1
 
-        if self.trained_lda is None:
+        if self.trained is None:
             self.n_z_w[z, t] -= 1
             self.n_z[z] -= 1
 
@@ -98,7 +98,7 @@ class LDA:
         z_n[n] = new_z
         n_m_z[new_z] += 1
 
-        if self.trained_lda is None:
+        if self.trained is None:
             self.n_z_w[new_z, t] += 1
             self.n_z[new_z] += 1
 
@@ -119,10 +119,10 @@ class LDA:
         '''
         Compute the perplexity
         '''
-        if self.trained_lda is None:
+        if self.trained is None:
             phi = self.worddist()
         else:
-            phi = self.trained_lda.worddist()
+            phi = self.trained.worddist()
         thetas = self.topicdist()
         log_per = 0
         N = 0

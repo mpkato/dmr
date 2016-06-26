@@ -9,13 +9,16 @@ class DMR(LDA):
     '''
     Topic Model with Dirichlet Multinomial Regression
     '''
-    def __init__(self, K, sigma, beta, docs, vecs, V):
-        super(DMR, self).__init__(K, 0.0, beta, docs, V)
+    def __init__(self, K, sigma, beta, docs, vecs, V, trained=None):
+        super(DMR, self).__init__(K, 0.0, beta, docs, V, trained)
         self.L = vecs.shape[1]
         self.vecs = vecs
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
+        if self.trained is not None:
+            alpha = np.exp(np.dot(self.vecs, self.trained.Lambda.T))
+            self.n_m_z += alpha
 
     def learning(self, iteration, voca):
         '''
@@ -27,10 +30,11 @@ class DMR(LDA):
         for i in range(iteration):
 
             # update alpha
-            self.n_m_z -= alpha
-            self.bfgs()
-            alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
-            self.n_m_z += alpha
+            if self.trained is None:
+                self.n_m_z -= alpha
+                self.bfgs()
+                alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
+                self.n_m_z += alpha
 
             self.inference()
             if (i + 1) % self.SAMPLING_RATE == 0:
@@ -56,18 +60,20 @@ class DMR(LDA):
         newLambda, fmin, res = optimize.fmin_l_bfgs_b(ll, Lambda, dll)
         self.Lambda = newLambda.reshape((self.K, self.L))
 
-    def perplexity(self, docs=None):
+    def perplexity(self):
         '''
         Compute the perplexity
         '''
-        if docs == None:
-            docs = self.docs
-        phi = self.worddist()
-        alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
+        if self.trained is None:
+            alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
+        else:
+            alpha = np.exp(np.dot(self.vecs, self.trained.Lambda.T))
+
         Kalpha = np.sum(alpha, axis=1)
+        phi = self.worddist()
         log_per = 0
         N = 0
-        for m, doc in enumerate(docs):
+        for m, doc in enumerate(self.docs):
             theta = self.n_m_z[m] / (len(self.docs[m]) + Kalpha[m])
             for w in doc:
                 log_per -= np.log(np.inner(phi[:,w], theta))
