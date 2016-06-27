@@ -12,7 +12,7 @@ class MDMR(LDA):
     '''
     def __init__(self, K, sigma, beta, docs, vecs, V, trained=None):
         super(MDMR, self).__init__(K, 0.0, beta, docs, V, trained)
-        self.L = vecs[0][0][1].shape[1]
+        self.L = vecs[0][0][1].shape[0]
         self.vecs = vecs
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
