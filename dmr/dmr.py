@@ -17,7 +17,7 @@ class DMR(LDA):
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
         if self.trained is not None:
-            alpha = np.exp(np.dot(self.vecs, self.trained.Lambda.T))
+            alpha = self.get_alpha(self.trained.Lambda)
             self.n_m_z += alpha
 
     def learning(self, iteration, voca):
@@ -33,7 +33,7 @@ class DMR(LDA):
             if self.trained is None:
                 self.n_m_z -= alpha
                 self.bfgs()
-                alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
+                alpha = self.get_alpha(self.Lambda)
                 self.n_m_z += alpha
 
             self.inference()
@@ -41,6 +41,13 @@ class DMR(LDA):
                 perp = self.perplexity()
                 print_info(("PERP%s" % (i+1), perp))
         self.output_word_dist_with_voca(voca)
+
+    def get_alpha(self, Lambda):
+        '''
+        alpha = exp(Lambda^T x)
+        '''
+        return np.exp(np.dot(self.vecs, Lambda.T))
+
 
     def bfgs(self):
         def ll(x):
@@ -65,9 +72,10 @@ class DMR(LDA):
         Compute the perplexity
         '''
         if self.trained is None:
-            alpha = np.exp(np.dot(self.vecs, self.Lambda.T))
+            Lambda = self.Lambda
         else:
-            alpha = np.exp(np.dot(self.vecs, self.trained.Lambda.T))
+            Lambda = self.trained.Lambda
+        alpha = self.get_alpha(Lambda)
 
         Kalpha = np.sum(alpha, axis=1)
         phi = self.worddist()
@@ -89,7 +97,7 @@ class DMR(LDA):
         result += -self.V * special.gammaln(self.beta)
 
         # P(z|Lambda)
-        alpha = np.exp(np.dot(self.vecs, x.T))
+        alpha = self.get_alpha(x)
         result += np.sum(special.gammaln(np.sum(alpha, axis=1)))
         result += -np.sum(special.gammaln(
             np.sum(self.n_m_z+alpha, axis=1)))
@@ -104,7 +112,7 @@ class DMR(LDA):
         return result
 
     def _dll(self, x):
-        alpha = np.exp(np.dot(self.vecs, x.T))
+        alpha = self.get_alpha(x)
         result = np.sum(self.vecs[:,np.newaxis,:] * alpha[:,:,np.newaxis]\
             * (special.digamma(np.sum(alpha, axis=1))[:,np.newaxis,np.newaxis]\
             - special.digamma(np.sum(self.n_m_z+alpha, axis=1))[:,np.newaxis,np.newaxis]\
