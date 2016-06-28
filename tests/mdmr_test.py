@@ -92,11 +92,10 @@ class DMRTestCase(unittest.TestCase):
         voca, docs, vecs, lda = self._init_mdmr()
 
         lda.vecs = [
-            [(0.5, np.array([0.1, 0.1])),
-            (0.5, np.array([0.2, 0.2]))],
-            [(0.8, np.array([1.0, 1.0])),
-            (0.2, np.array([0.5, 0.5]))],
+            [np.array([0.1, 0.1]), np.array([0.2, 0.2])],
+            [np.array([1.0, 1.0]), np.array([0.5, 0.5])],
         ]
+        lda.lens = [np.array([0.5, 0.5]), np.array([0.8, 0.2])]
         lda.Lambda = np.array([
             [1.0, 1.0],
             [2.0, 0.5]
@@ -119,11 +118,10 @@ class DMRTestCase(unittest.TestCase):
         voca, docs, vecs, lda = self._init_mdmr()
 
         lda.vecs = [
-            [(0.5, np.array([0.1, 0.1])),
-            (0.5, np.array([0.2, 0.2]))],
-            [(0.8, np.array([1.0, 1.0])),
-            (0.2, np.array([0.5, 0.5]))],
+            [np.array([0.1, 0.1]), np.array([0.2, 0.2])],
+            [np.array([1.0, 1.0]), np.array([0.5, 0.5])],
         ]
+        lda.lens = [np.array([0.5, 0.5]), np.array([0.8, 0.2])]
         lda.Lambda = np.array([
             [1.0, 1.0],
             [2.0, 0.5]
