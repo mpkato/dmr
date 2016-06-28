@@ -3,7 +3,7 @@
 import numpy as np
 import scipy.special as special
 import scipy.optimize as optimize
-from .lda import print_info, LDA
+from .lda import LDA
 
 class DMR(LDA):
     '''
@@ -16,31 +16,20 @@ class DMR(LDA):
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
+        self.prev_alpha = 0.0
         if self.trained is not None:
             alpha = self.get_alpha(self.trained.Lambda)
             self.n_m_z += alpha
 
-    def learning(self, iteration, voca):
+    def hyperparameter_learning(self):
         '''
-        Repeat inference for learning with alpha update
+        update alpha (overwrite)
         '''
-        perp = self.perplexity()
-        print_info(("PERP0", perp))
-        alpha = 0.0
-        for i in range(iteration):
-
-            # update alpha
-            if self.trained is None:
-                self.n_m_z -= alpha
-                self.bfgs()
-                alpha = self.get_alpha(self.Lambda)
-                self.n_m_z += alpha
-
-            self.inference()
-            if (i + 1) % self.SAMPLING_RATE == 0:
-                perp = self.perplexity()
-                print_info(("PERP%s" % (i+1), perp))
-        self.output_word_dist_with_voca(voca)
+        if self.trained is None:
+            self.n_m_z -= self.prev_alpha
+            self.bfgs()
+            self.prev_alpha = self.get_alpha(self.Lambda)
+            self.n_m_z += self.prev_alpha
 
     def get_alpha(self, Lambda):
         '''

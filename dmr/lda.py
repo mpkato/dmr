@@ -9,11 +9,7 @@ import numpy as np
 import random
 import sys
 from collections import defaultdict
-import logging
-
-def print_info(info_tuple):
-    msg = '\t'.join(map(str, info_tuple))
-    logging.info(msg)
+from logging import getLogger
 
 class LDA:
     '''
@@ -34,6 +30,9 @@ class LDA:
         if self.trained is not None:
             self.n_z_w = self.trained.n_z_w
             self.n_z = self.trained.n_z
+
+        # init logger
+        self.logger = getLogger(self.__class__.__name__)
 
     def _init_state(self):
         '''
@@ -138,13 +137,20 @@ class LDA:
         Repeat inference for learning
         '''
         perp = self.perplexity()
-        print_info(("PERP0", perp))
+        self.logger.info("\t".join(map(str, ("PERP0", perp))))
         for i in range(iteration):
+            self.hyperparameter_learning()
             self.inference()
             if (i + 1) % self.SAMPLING_RATE == 0:
                 perp = self.perplexity()
-                print_info(("PERP%s" % (i+1), perp))
+                self.logger.info("\t".join(map(str, ("PERP%s" % (i+1), perp))))
         self.output_word_dist_with_voca(voca)
+
+    def hyperparameter_learning(self):
+        '''
+        No hyperparameter learning in LDA
+        '''
+        pass
 
     def word_dist_with_voca(self, voca, topk=None):
         '''
@@ -165,43 +171,4 @@ class LDA:
             word_dist[k] = sorted(word_dist[k].items(),
                 key=lambda x: x[1], reverse=True)
             for w, v in word_dist[k]:
-                print_info(("TOPIC", k, w, v))
-
-def main():
-    import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-    import dmr
-    import argparse
-    logging.basicConfig(level=logging.INFO, filename='lda.log')
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("filename", type=str, help="corpus filename")
-    parser.add_argument("--alpha", dest="alpha", type=float,
-        help="parameter alpha", default=0.1)
-    parser.add_argument("--beta", dest="beta", type=float,
-        help="parameter beta", default=0.01)
-    parser.add_argument("-k", dest="K", type=int,
-        help="number of topics", default=50)
-    parser.add_argument("-i", dest="iteration", type=int,
-        help="iteration count", default=50)
-    parser.add_argument("--df", dest="df", type=int,
-        help="threshold of document freaquency to cut words", default=0)
-    options = parser.parse_args()
-    if not options.filename:
-        parser.error("need corpus filename(-f)")
-
-    corpus = dmr.Corpus.read(options.filename)
-    voca = dmr.Vocabulary()
-    docs = voca.read_corpus(corpus)
-    if options.df > 0:
-        docs = voca.cut_low_freq(docs, options.df)
-
-    lda = dmr.LDA(options.K, options.alpha, options.beta, docs, voca.size())
-    print_info(("BASIC", "corpus=%d, words=%d, K=%d, a=%f, b=%f, iter=%d"
-        % (len(docs), len(voca.vocas), options.K,
-        options.alpha, options.beta, options.iteration)))
-
-    lda.learning(options.iteration, voca)
-
-if __name__ == "__main__":
-    main()
+                self.logger.debug("\t".join(map(str, ("TOPIC", k, w, v))))
