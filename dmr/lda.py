@@ -137,13 +137,13 @@ class LDA:
         Repeat inference for learning
         '''
         perp = self.perplexity()
-        self.logger.info("\t".join(map(str, ("PERP0", perp))))
+        self.log(self.logger.info, "PERP0", [perp])
         for i in range(iteration):
             self.hyperparameter_learning()
             self.inference()
             if (i + 1) % self.SAMPLING_RATE == 0:
                 perp = self.perplexity()
-                self.logger.info("\t".join(map(str, ("PERP%s" % (i+1), perp))))
+                self.log(self.logger.info, "PERP%s" % (i+1), [perp])
         self.output_word_dist_with_voca(voca)
 
     def hyperparameter_learning(self):
@@ -171,4 +171,11 @@ class LDA:
             word_dist[k] = sorted(word_dist[k].items(),
                 key=lambda x: x[1], reverse=True)
             for w, v in word_dist[k]:
-                self.logger.debug("\t".join(map(str, ("TOPIC", k, w, v))))
+                self.log(self.logger.debug, "TOPIC", [k, w, v])
+
+    def log(self, method, etype, messages):
+        method("\t".join(map(str, [self.params(), etype] + messages)))
+
+    def params(self):
+        return '''K=%d, alpha=%s, beta=%s''' % (self.K, self.alpha, self.beta)
+

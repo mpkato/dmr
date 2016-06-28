@@ -110,3 +110,6 @@ class DMR(LDA):
             - x / (self.sigma ** 2)
         result = -result
         return result
+
+    def params(self):
+        return '''K=%d, sigma=%s, beta=%s''' % (self.K, self.sigma, self.beta)
