@@ -179,3 +179,17 @@ class LDA:
     def params(self):
         return '''K=%d, alpha=%s, beta=%s''' % (self.K, self.alpha, self.beta)
 
+    def __getstate__(self):
+        '''
+        logger cannot be serialized
+        '''
+        state = self.__dict__.copy()
+        del state['logger']
+        return state
+
+    def __setstate__(self, state):
+        '''
+        logger cannot be serialized
+        '''
+        self.__dict__.update(state)
+        self.logger = getLogger(self.__class__.__name__)
