@@ -17,6 +17,10 @@ class DMR(LDA):
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
+        if self.trained is None:
+            self.alpha = self.get_alpha()
+        else:
+            self.alpha = self.trained.get_alpha()
 
     def hyperparameter_learning(self):
         '''
@@ -24,16 +28,13 @@ class DMR(LDA):
         '''
         if self.trained is None:
             self.bfgs()
+            self.alpha = self.get_alpha()
 
     def get_alpha_n_m_z(self, idx=None):
-        if self.trained is None:
-            alpha = self.get_alpha(self.Lambda)
-        else:
-            alpha = self.get_alpha(self.trained.Lambda)
         if idx is None:
-            return self.n_m_z + alpha
+            return self.n_m_z + self.alpha
         else:
-            return self.n_m_z[idx] + alpha[idx]
+            return self.n_m_z[idx] + self.alpha[idx]
 
     def get_alpha(self, Lambda=None):
         '''
@@ -44,7 +45,6 @@ class DMR(LDA):
         return np.exp(np.dot(self.vecs, Lambda.T))
 
     def bfgs(self):
-        np.seterr(all='raise')
         def ll(x):
             x = x.reshape((self.K, self.L))
             return self._ll(x)
@@ -84,7 +84,7 @@ class DMR(LDA):
 
         result = -result
         return result
-    
+
     def _dll(self, x):
         alpha = self.get_alpha(x)
         result = np.sum(self.vecs[:,np.newaxis,:] * alpha[:,:,np.newaxis]\

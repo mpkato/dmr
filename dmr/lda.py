@@ -83,14 +83,7 @@ class LDA:
 
                 # sampling topic new_z for t
                 p_z = self.n_z_w[:, t] * self.get_alpha_n_m_z(m) / self.n_z
-                try:
-                    new_z = np.random.multinomial(1, p_z / p_z.sum()).argmax()
-                except Exception as e:
-                    print(self.get_alpha(self.Lambda)[m])
-                    print(p_z)
-                    print(p_z / np.sum(p_z))
-                    print(np.sum(p_z / np.sum(p_z)))
-                    raise e
+                new_z = np.random.multinomial(1, p_z / p_z.sum()).argmax()
 
                 # set z the new topic and increment counters
                 self.assignment(z_n, n_m_z, n, t, new_z)

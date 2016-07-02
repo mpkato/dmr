@@ -17,19 +17,31 @@ class MDMR(DMR):
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
+        if self.trained is None:
+            self.alpha = self.get_alpha()
+        else:
+            self.alpha = self.trained.get_alpha()
 
     def _set_lens_vecs(self, vecs):
         self.lens = [np.array([l for l, _ in vs]) for vs in vecs]
         self.lens = [lv / np.sum(lv) for lv in self.lens]
         self.vecs = [np.array([v for _, v in vs]) for vs in vecs]
 
-    def get_alpha(self, Lambda):
+    def get_alpha(self, Lambda=None):
         '''
         alpha = sum_l len_l * exp(Lambda^T x_l)
         '''
+        if Lambda is None:
+            Lambda = self.Lambda
         return np.array([np.sum(
             ls[:,np.newaxis] * np.exp(np.dot(vs, Lambda.T)), axis=0)
                 for ls, vs in zip(self.lens, self.vecs)])
+
+    def get_alpha_n_m_z(self, idx=None):
+        if idx is None:
+            return self.n_m_z + self.alpha
+        else:
+            return self.n_m_z[idx] + self.alpha[idx]
 
     def _dll(self, x):
         alpha = self.get_alpha(x)
