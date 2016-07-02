@@ -5,7 +5,7 @@ import dmr
 import os
 import numpy as np
 from tests.settings import (DMR_DOC_FILEPATH, DMR_VEC_FILEPATH,
-    K, BETA, SIGMA, mk_dmr_dat, count_word_freq)
+    K, L, BETA, SIGMA, mk_dmr_dat, count_word_freq)
 
 class DMRTestCase(unittest.TestCase):
     def setUp(self):
@@ -66,6 +66,17 @@ class DMRTestCase(unittest.TestCase):
         self.assertAlmostEquals(np.sum(lda.n_z_w[:, 0]), n_z_w_0)
         self.assertAlmostEquals(np.sum(lda.n_z_w[:, 1]), n_z_w_1)
 
+    def test_dmr__ll(self):
+        '''
+        DMR.inference
+        '''
+        voca, docs, vecs, lda = self._init_dmr()
+        
+        Lambda = np.random.multivariate_normal(np.zeros(L), 
+            (SIGMA ** 2) * np.identity(L), size=K)
+        ideal = lda._ll(Lambda)
+        actual = lda._new_ll(Lambda)
+        self.assertAlmostEqual(actual, ideal)
 
 if __name__ == '__main__':
     nose.main(argv=['nose', '-v'])

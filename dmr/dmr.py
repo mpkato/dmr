@@ -3,6 +3,7 @@
 import numpy as np
 import scipy.special as special
 import scipy.optimize as optimize
+import scipy.misc as misc
 from .lda import LDA
 
 class DMR(LDA):
@@ -99,7 +100,7 @@ class DMR(LDA):
 
         result = -result
         return result
-
+    
     def _dll(self, x):
         alpha = self.get_alpha(x)
         result = np.sum(self.vecs[:,np.newaxis,:] * alpha[:,:,np.newaxis]\
@@ -110,6 +111,36 @@ class DMR(LDA):
             - x / (self.sigma ** 2)
         result = -result
         return result
+
+    def _new_ll(self, x):
+        result = 0.0
+        # P(w|z)
+        result += self.K * special.gammaln(self.beta * self.K)
+        result += -np.sum(special.gammaln(np.sum(self.n_z_w, axis=1)))
+        result += np.sum(special.gammaln(self.n_z_w))
+        result += -self.V * special.gammaln(self.beta)
+
+        # P(z|Lambda)
+        log_alpha = np.dot(self.vecs, x.T) # M x K
+        for m in range(log_alpha.shape[0]):
+            for k in range(log_alpha.shape[1]):
+                result += np.sum([
+                    self._logsumexp([log_alpha[m, k]], a)\
+                    - self._logsumexp(log_alpha[m], a+np.sum(self.n_m_z[m,:k]))
+                    for a in range(int(self.n_m_z[m, k]))])
+
+        # P(Lambda)
+        result += -self.K / 2.0 * np.log(2.0 * np.pi * (self.sigma ** 2))
+        result += -1.0 / (2.0 * (self.sigma ** 2)) * np.sum(x ** 2)
+
+        result = -result
+        return result
+
+    def _logsumexp(self, arr, a):
+        if a == 0:
+            return misc.logsumexp(arr)
+        else:
+            return misc.logsumexp(np.hstack((arr, [np.log(a)])))
 
     def params(self):
         return '''K=%d, sigma=%s, beta=%s''' % (self.K, self.sigma, self.beta)

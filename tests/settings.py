@@ -14,6 +14,10 @@ DMR_VEC_FILEPATH = os.path.join(
 L = 10
 SIGMA = 1.0
 
+# jlda
+KAPPA = 1
+NU = 1
+
 # shared
 CHAR_OFFSET = 97
 K = 5
