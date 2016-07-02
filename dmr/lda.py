@@ -61,6 +61,15 @@ class LDA:
                 self.n_z[z] += 1
             self.z_m_n.append(np.array(z_n))
 
+    def get_alpha_n_m_z(self, idx=None):
+        '''
+        Return self.n_m_z (including alpha)
+        '''
+        if idx is None:
+            return self.n_m_z
+        else:
+            return self.n_m_z[idx]
+
     def inference(self):
         '''
         Re-assignment of topics to words
@@ -73,8 +82,15 @@ class LDA:
                 self.discount(z_n, n_m_z, n, t)
 
                 # sampling topic new_z for t
-                p_z = self.n_z_w[:, t] * n_m_z / self.n_z
-                new_z = np.random.multinomial(1, p_z / p_z.sum()).argmax()
+                p_z = self.n_z_w[:, t] * self.get_alpha_n_m_z(m) / self.n_z
+                try:
+                    new_z = np.random.multinomial(1, p_z / p_z.sum()).argmax()
+                except Exception as e:
+                    print(self.get_alpha(self.Lambda)[m])
+                    print(p_z)
+                    print(p_z / np.sum(p_z))
+                    print(np.sum(p_z / np.sum(p_z)))
+                    raise e
 
                 # set z the new topic and increment counters
                 self.assignment(z_n, n_m_z, n, t, new_z)
@@ -107,12 +123,19 @@ class LDA:
         '''
         return self.n_z_w / self.n_z[:, np.newaxis]
 
+    def get_alpha(self):
+        '''
+        fixed alpha
+        '''
+        return self.alpha
+
     def topicdist(self):
         '''
         theta = P(z|d): topic probability of each document
         '''
         doclens = np.array(list(map(len, self.docs)))
-        return self.n_m_z / (doclens[:, np.newaxis] + self.K * self.alpha)
+        return self.get_alpha_n_m_z()\
+            / (doclens[:, np.newaxis] + self.K * self.get_alpha())
 
     def perplexity(self):
         '''

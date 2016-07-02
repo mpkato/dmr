@@ -17,29 +17,34 @@ class DMR(LDA):
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
-        self.prev_alpha = 0.0
-        if self.trained is not None:
-            alpha = self.get_alpha(self.trained.Lambda)
-            self.n_m_z += alpha
 
     def hyperparameter_learning(self):
         '''
         update alpha (overwrite)
         '''
         if self.trained is None:
-            self.n_m_z -= self.prev_alpha
             self.bfgs()
-            self.prev_alpha = self.get_alpha(self.Lambda)
-            self.n_m_z += self.prev_alpha
 
-    def get_alpha(self, Lambda):
+    def get_alpha_n_m_z(self, idx=None):
+        if self.trained is None:
+            alpha = self.get_alpha(self.Lambda)
+        else:
+            alpha = self.get_alpha(self.trained.Lambda)
+        if idx is None:
+            return self.n_m_z + alpha
+        else:
+            return self.n_m_z[idx] + alpha[idx]
+
+    def get_alpha(self, Lambda=None):
         '''
         alpha = exp(Lambda^T x)
         '''
+        if Lambda is None:
+            Lambda = self.Lambda
         return np.exp(np.dot(self.vecs, Lambda.T))
 
-
     def bfgs(self):
+        np.seterr(all='raise')
         def ll(x):
             x = x.reshape((self.K, self.L))
             return self._ll(x)
@@ -56,27 +61,6 @@ class DMR(LDA):
 
         newLambda, fmin, res = optimize.fmin_l_bfgs_b(ll, Lambda, dll)
         self.Lambda = newLambda.reshape((self.K, self.L))
-
-    def perplexity(self):
-        '''
-        Compute the perplexity
-        '''
-        if self.trained is None:
-            Lambda = self.Lambda
-        else:
-            Lambda = self.trained.Lambda
-        alpha = self.get_alpha(Lambda)
-
-        Kalpha = np.sum(alpha, axis=1)
-        phi = self.worddist()
-        log_per = 0
-        N = 0
-        for m, doc in enumerate(self.docs):
-            theta = self.n_m_z[m] / (len(self.docs[m]) + Kalpha[m])
-            for w in doc:
-                log_per -= np.log(np.inner(phi[:,w], theta))
-            N += len(doc)
-        return np.exp(log_per / N)
 
     def _ll(self, x):
         result = 0.0
@@ -111,36 +95,6 @@ class DMR(LDA):
             - x / (self.sigma ** 2)
         result = -result
         return result
-
-    def _new_ll(self, x):
-        result = 0.0
-        # P(w|z)
-        result += self.K * special.gammaln(self.beta * self.K)
-        result += -np.sum(special.gammaln(np.sum(self.n_z_w, axis=1)))
-        result += np.sum(special.gammaln(self.n_z_w))
-        result += -self.V * special.gammaln(self.beta)
-
-        # P(z|Lambda)
-        log_alpha = np.dot(self.vecs, x.T) # M x K
-        for m in range(log_alpha.shape[0]):
-            for k in range(log_alpha.shape[1]):
-                result += np.sum([
-                    self._logsumexp([log_alpha[m, k]], a)\
-                    - self._logsumexp(log_alpha[m], a+np.sum(self.n_m_z[m,:k]))
-                    for a in range(int(self.n_m_z[m, k]))])
-
-        # P(Lambda)
-        result += -self.K / 2.0 * np.log(2.0 * np.pi * (self.sigma ** 2))
-        result += -1.0 / (2.0 * (self.sigma ** 2)) * np.sum(x ** 2)
-
-        result = -result
-        return result
-
-    def _logsumexp(self, arr, a):
-        if a == 0:
-            return misc.logsumexp(arr)
-        else:
-            return misc.logsumexp(np.hstack((arr, [np.log(a)])))
 
     def params(self):
         return '''K=%d, sigma=%s, beta=%s''' % (self.K, self.sigma, self.beta)

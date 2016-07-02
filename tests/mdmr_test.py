@@ -82,7 +82,6 @@ class DMRTestCase(unittest.TestCase):
         voca, docs, vecs, lda = self._init_mdmr()
 
         lda.learning(1, voca)
-        lda.n_m_z -= lda.get_alpha(lda.Lambda)
         np.testing.assert_almost_equal([L]*len(lda.docs), np.sum(lda.n_m_z, axis=1))
 
     def test_mdmr_get_alpha(self):

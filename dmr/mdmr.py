@@ -17,10 +17,6 @@ class MDMR(DMR):
         self.sigma = sigma
         self.Lambda = np.random.multivariate_normal(np.zeros(self.L),
             (self.sigma ** 2) * np.identity(self.L), size=self.K)
-        self.prev_alpha = 0.0
-        if self.trained is not None:
-            alpha = self.get_alpha(self.trained.Lambda)
-            self.n_m_z += alpha
 
     def _set_lens_vecs(self, vecs):
         self.lens = [np.array([l for l, _ in vs]) for vs in vecs]
