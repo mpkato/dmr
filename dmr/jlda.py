@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import numpy as np
-from choldate import cholupdate, choldowndate
+#from choldate import cholupdate, choldowndate
 import scipy.special as special
 import scipy.constants as constants
 import scipy.optimize as optimize
