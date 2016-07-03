@@ -41,7 +41,10 @@ class DMR(LDA):
         alpha = exp(Lambda^T x)
         '''
         if Lambda is None:
-            Lambda = self.Lambda
+            if self.trained is None:
+                Lambda = self.Lambda
+            else:
+                Lambda = self.trained.Lambda
         return np.exp(np.dot(self.vecs, Lambda.T))
 
     def bfgs(self):
