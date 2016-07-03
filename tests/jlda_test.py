@@ -82,5 +82,24 @@ class JLDATestCase(unittest.TestCase):
             for c2 in range(L):
                 self.assertAlmostEqual(sigma_0[c, c2], lda.sigma_z[0][c, c2])
 
+    def test_jlda_inference(self):
+        '''
+        JLDA.inference
+        '''
+        voca, docs, vecs, lda = self._init_jlda()
+
+        n_m_z_0 = np.sum(lda.n_m_z[0])
+        n_m_z_1 = np.sum(lda.n_m_z[1])
+        n_z_w_0 = np.sum(lda.n_z_w[:, 0])
+        n_z_w_1 = np.sum(lda.n_z_w[:, 1])
+
+        for i in range(100):
+            lda.inference()
+
+        self.assertAlmostEquals(np.sum(lda.n_m_z[0]), n_m_z_0)
+        self.assertAlmostEquals(np.sum(lda.n_m_z[1]), n_m_z_1)
+        self.assertAlmostEquals(np.sum(lda.n_z_w[:, 0]), n_z_w_0)
+        self.assertAlmostEquals(np.sum(lda.n_z_w[:, 1]), n_z_w_1)
+
 if __name__ == '__main__':
     nose.main(argv=['nose', '-v'])
