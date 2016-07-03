@@ -20,7 +20,7 @@ class DMR(LDA):
         if self.trained is None:
             self.alpha = self.get_alpha()
         else:
-            self.alpha = self.trained.get_alpha()
+            self.alpha = self.get_alpha(self.trained.Lambda)
 
     def hyperparameter_learning(self):
         '''
