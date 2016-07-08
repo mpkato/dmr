@@ -93,8 +93,7 @@ class JLDATestCase(unittest.TestCase):
         n_z_w_0 = np.sum(lda.n_z_w[:, 0])
         n_z_w_1 = np.sum(lda.n_z_w[:, 1])
 
-        for i in range(100):
-            lda.inference()
+        lda.inference()
 
         self.assertAlmostEquals(np.sum(lda.n_m_z[0]), n_m_z_0)
         self.assertAlmostEquals(np.sum(lda.n_m_z[1]), n_m_z_1)
